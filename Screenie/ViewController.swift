@@ -6,10 +6,12 @@
 //  Copyright © 2019 gdm. All rights reserved.
 //
 
+//NOT TESTED ON HARDWARE
+
 import UIKit
 import ReplayKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, RPPreviewViewControllerDelegate {
 
     
     @IBOutlet weak var statusLabel: UILabel!
@@ -43,7 +45,7 @@ class ViewController: UIViewController {
         if !isRecording {
             startRecording()
         } else {
-              //  stopRecording()
+                stopRecording()
             }
         }
     
@@ -77,5 +79,42 @@ class ViewController: UIViewController {
         }
     }
     
+    func stopRecording() {
+        recorder.stopRecording { (preview, error) in
+            guard preview != nil else {
+                print("Preview controller not available")
+                return
+            }
+            
+            let alert = UIAlertController(title: "Recording finished", message: "Would you like to edit or delete your recording?", preferredStyle: .alert)
+            let deleteAction = UIAlertAction(title: "Delete", style: .destructive, handler: { (action) in
+                self.recorder.discardRecording {
+                    print("Recording discarded successfully.")
+                }
+            })
+            let editAction = UIAlertAction(title: "Edit", style: .default, handler: { (action) in
+                preview?.previewControllerDelegate = self
+                self.present(preview!, animated: true, completion: nil)
+            })
+            alert.addAction(deleteAction)
+            alert.addAction(editAction)
+            self.present(alert, animated: true, completion: nil)
+            
+            self.isRecording = false
+            self.viewReset()
+        }
+    }
+    
+    func viewReset() {
+        micToggle.isEnabled = true
+        statusLabel.text = "Ready to Record"
+        statusLabel.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+        recordButton.setTitle("Record", for: .normal)
+        recordButton.setTitleColor(#colorLiteral(red: 0.2994912565, green: 0.7500386834, blue: 0.3387371898, alpha: 1), for: .normal)
+    }
+    
+    func previewControllerDidFinish(_ previewController: RPPreviewViewController) {
+        dismiss(animated: true, completion: nil)
+    }
 }
 
